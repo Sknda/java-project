@@ -1,0 +1,54 @@
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class StudentDAO {
+    public void addStudent(Student student) throws SQLException {
+        String query = "INSERT INTO students (name, age, major) VALUES (?, ?, ?)";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, student.getName());
+            statement.setInt(2, student.getAge());
+            statement.setString(3, student.getMajor());
+            statement.executeUpdate();
+        }
+    }
+
+    public void updateStudent(Student student) throws SQLException {
+        String query = "UPDATE students SET name = ?, age = ?, major = ? WHERE id = ?";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, student.getName());
+            statement.setInt(2, student.getAge());
+            statement.setString(3, student.getMajor());
+            statement.setInt(4, student.getId());
+            statement.executeUpdate();
+        }
+    }
+
+    public void deleteStudent(int id) throws SQLException {
+        String query = "DELETE FROM students WHERE id = ?";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, id);
+            statement.executeUpdate();
+        }
+    }
+
+    public List<Student> getAllStudents() throws SQLException {
+        List<Student> students = new ArrayList<>();
+        String query = "SELECT * FROM students";
+        try (Connection connection = DatabaseConnection.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String name = resultSet.getString("name");
+                int age = resultSet.getInt("age");
+                String major = resultSet.getString("major");
+                students.add(new Student(id, name, age, major));
+            }
+        }
+        return students;
+    }
+}
