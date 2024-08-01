@@ -1,0 +1,158 @@
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.SQLException;
+import java.util.List;
+
+public class StudentManagementApp extends JFrame {
+    private StudentDAO studentDAO;
+    private DefaultTableModel tableModel;
+    private JTable table;
+    private JTextField nameField;
+    private JTextField ageField;
+    private JTextField majorField;
+    private JButton addButton;
+    private JButton updateButton;
+    private JButton deleteButton;
+    private JButton refreshButton;
+
+    public StudentManagementApp() {
+        studentDAO = new StudentDAO();
+        setTitle("Student Management");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        JPanel panel = new JPanel(new BorderLayout());
+        tableModel = new DefaultTableModel(new Object[]{"ID", "Name", "Age", "Major"}, 0);
+        table = new JTable(tableModel);
+        JScrollPane scrollPane = new JScrollPane(table);
+
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new GridLayout(4, 2));
+        inputPanel.add(new JLabel("Name:"));
+        nameField = new JTextField();
+        inputPanel.add(nameField);
+        inputPanel.add(new JLabel("Age:"));
+        ageField = new JTextField();
+        inputPanel.add(ageField);
+        inputPanel.add(new JLabel("Major:"));
+        majorField = new JTextField();
+        inputPanel.add(majorField);
+
+        addButton = new JButton("Add");
+        updateButton = new JButton("Update");
+        deleteButton = new JButton("Delete");
+        refreshButton = new JButton("Refresh");
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(addButton);
+        buttonPanel.add(updateButton);
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(refreshButton);
+
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(inputPanel, BorderLayout.NORTH);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        add(panel);
+
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                addStudent();
+            }
+        });
+
+        updateButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateStudent();
+            }
+        });
+
+        deleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteStudent();
+            }
+        });
+
+        refreshButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshTable();
+            }
+        });
+
+        refreshTable();
+    }
+
+    private void addStudent() {
+        String name = nameField.getText();
+        int age = Integer.parseInt(ageField.getText());
+        String major = majorField.getText();
+        Student student = new Student(name, age, major);
+        try {
+            studentDAO.addStudent(student);
+            refreshTable();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateStudent() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow >= 0) {
+            int id = (int) tableModel.getValueAt(selectedRow, 0);
+            String name = nameField.getText();
+            int age = Integer.parseInt(ageField.getText());
+            String major = majorField.getText();
+            Student student = new Student(id, name, age, major);
+            try {
+                studentDAO.updateStudent(student);
+                refreshTable();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Please select a student to update");
+        }
+    }
+
+    private void deleteStudent() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow >= 0) {
+            int id = (int) tableModel.getValueAt(selectedRow, 0);
+            try {
+                studentDAO.deleteStudent(id);
+                refreshTable();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Please select a student to delete");
+        }
+    }
+
+    private void refreshTable() {
+        try {
+            List<Student> students = studentDAO.getAllStudents();
+            tableModel.setRowCount(0);
+            for (Student student : students) {
+                tableModel.addRow(new Object[]{student.getId(), student.getName(), student.getAge(), student.getMajor()});
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new StudentManagementApp().setVisible(true);
+            }
+        });
+    }
+}
